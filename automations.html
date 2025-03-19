@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Automations</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <a href="index.html">Dashboard</a>
+      <a href="control.html">Control</a>
+      <a href="automations.html" class="active">Automations</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+      <div class="header">
+        <h1>Automations</h1>
+        <!-- Hamburger Menu -->
+        <div class="hamburger" onclick="toggleSidebar()">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+
+      <!-- Automation Cards -->
+      <div class="automations-grid">
+        <div class="automation-card">
+          <div class="automation-header">
+            <span>Turn on Lights at Sunset</span>
+            <button class="toggle-button" onclick="toggleAutomation(this)">
+              <div class="toggle-circle"></div>
+            </button>
+          </div>
+          <div class="automation-description">
+            Automatically turns on the living room lights at sunset.
+          </div>
+        </div>
+
+        <div class="automation-card">
+          <div class="automation-header">
+            <span>Turn off Lights at Sunrise</span>
+            <button class="toggle-button" onclick="toggleAutomation(this)">
+              <div class="toggle-circle"></div>
+            </button>
+          </div>
+          <div class="automation-description">
+            Automatically turns off the living room lights at sunrise.
+          </div>
+        </div>
+
+        <div class="automation-card">
+          <div class="automation-header">
+            <span>Notify When Door Opens</span>
+            <button class="toggle-button" onclick="toggleAutomation(this)">
+              <div class="toggle-circle"></div>
+            </button>
+          </div>
+          <div class="automation-description">
+            Sends a notification when the front door is opened.
+          </div>
+        </div>
+
+        <div class="automation-card">
+          <div class="automation-header">
+            <span>Turn on Heater at 7 AM</span>
+            <button class="toggle-button" onclick="toggleAutomation(this)">
+              <div class="toggle-circle"></div>
+            </button>
+          </div>
+          <div class="automation-description">
+            Turns on the heater every morning at 7 AM.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Function to toggle the sidebar
+      function toggleSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        const hamburger = document.querySelector(".hamburger");
+        sidebar.classList.toggle("active");
+        hamburger.classList.toggle("active");
+      }
+
+      // Function to toggle automation state
+      function toggleAutomation(button) {
+        button.classList.toggle("on");
+      }
+    </script>
+  </body>
+</html>

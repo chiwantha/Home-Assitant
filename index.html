@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <a href="index.html" class="active">Dashboard</a>
+      <a href="control.html">Control</a>
+      <a href="automations.html">Empty</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+      <div class="header">
+        <h1>Dashboard</h1>
+        <!-- Hamburger Menu -->
+        <div class="hamburger" onclick="toggleSidebar()">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+      <div class="info-cards">
+        <div class="info-card">
+          <span>Temperature</span>
+          <span>35°</span>
+        </div>
+        <div class="info-card">
+          <span>Light</span>
+          <span>Normal</span>
+        </div>
+        <div class="info-card">
+          <span>Time</span>
+          <span>Rtc</span>
+        </div>
+        <div class="info-card">
+          <span>Rssi</span>
+          <span>59%</span>
+        </div>
+        <div class="info-card">
+          <span>Control Mode</span>
+          <span>Semi Auto</span>
+        </div>
+        <div class="info-card">
+          <span>On Switches</span>
+          <span>03</span>
+        </div>
+        <div class="info-card">
+          <span>Power Usage</span>
+          <span>Unavailable</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function toggleSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        const hamburger = document.querySelector(".hamburger");
+        sidebar.classList.toggle("active");
+        hamburger.classList.toggle("active");
+      }
+    </script>
+  </body>
+</html>

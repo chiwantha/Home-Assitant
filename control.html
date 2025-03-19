@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Control</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <a href="index.html">Dashboard</a>
+      <a href="control.html" class="active">Control</a>
+      <a href="automations.html">Empty</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+      <div class="header">
+        <h1>Lights Control</h1>
+        <!-- Hamburger Menu -->
+        <div class="hamburger" onclick="toggleSidebar()">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+      <div class="toggle-container">
+        <span>Master Switch</span>
+        <button
+          class="toggle-button"
+          id="masterSwitch"
+          onclick="toggleMasterSwitch()"
+        >
+          <div class="toggle-circle"></div>
+        </button>
+      </div>
+      <div class="switches-grid" id="switchesGrid">
+        <!-- Relay switches will be dynamically added here -->
+      </div>
+    </div>
+
+    <script>
+      // Initialize state
+      let masterSwitchState = false;
+      const relayNames = [
+        "Kitchen",
+        "Night Guid",
+        "Bathroom",
+        "Gate Stairs",
+        "Kitchen Out",
+        "Living Room 1",
+        "Living Room 2",
+        "Master Bedroom",
+        "Guest Bedroom",
+        "Front Bedroom",
+        "Studio",
+        "Porch",
+        "Verenda 1",
+        "Verenda 2",
+        "Verenda 3",
+        "Back Yard",
+        "Garden Wall",
+        "Main Gate",
+      ];
+
+      let switchStates = Array(relayNames.length).fill(false); // Match number of relays
+
+      // Function to toggle the master switch
+      function toggleMasterSwitch() {
+        masterSwitchState = !masterSwitchState;
+
+        // Toggle each switch one by one with a delay
+        switchStates.forEach((_, index) => {
+          setTimeout(() => {
+            switchStates[index] = masterSwitchState;
+            updateSwitches();
+            console.log(
+              `${relayNames[index]} switched to ${
+                masterSwitchState ? "ON" : "OFF"
+              }`
+            );
+          }, index * 50); // 200ms delay per switch
+        });
+      }
+
+      // Function to toggle individual switches
+      function toggleSwitch(index) {
+        switchStates[index] = !switchStates[index];
+        masterSwitchState = switchStates.every((state) => state);
+        updateSwitches();
+        console.log(
+          `${relayNames[index]} switched to ${
+            switchStates[index] ? "ON" : "OFF"
+          }`
+        );
+      }
+
+      // Function to update the UI
+      function updateSwitches() {
+        const masterButton = document.getElementById("masterSwitch");
+        if (masterButton) {
+          masterButton.classList.toggle("on", masterSwitchState);
+        }
+
+        const switches = document.querySelectorAll(
+          ".switches-grid .toggle-button"
+        );
+        switches.forEach((button, index) => {
+          button.classList.toggle("on", switchStates[index]);
+        });
+      }
+
+      // Function to generate relay switches
+      function generateRelays() {
+        const switchesGrid = document.getElementById("switchesGrid");
+        switchesGrid.innerHTML = relayNames
+          .map(
+            (name, index) => `
+          <div class="toggle-container">
+            <span>${name}</span>
+            <button class="toggle-button" onclick="toggleSwitch(${index})">
+              <div class="toggle-circle"></div>
+            </button>
+          </div>
+        `
+          )
+          .join("");
+      }
+
+      // Function to toggle the sidebar
+      function toggleSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        const hamburger = document.querySelector(".hamburger");
+        sidebar.classList.toggle("active");
+        hamburger.classList.toggle("active");
+      }
+
+      // Generate relay switches on page load
+      generateRelays();
+    </script>
+  </body>
+</html>
