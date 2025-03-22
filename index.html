@@ -6,7 +6,7 @@
     <title>Dashboard</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
+  <body onload="initWebSocket()">
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
       <a href="index.html" class="active">Dashboard</a>
@@ -27,37 +27,60 @@
       </div>
       <div class="info-cards">
         <div class="info-card">
-          <span>Temperature</span>
-          <span>35°</span>
+          <span>WiFi RSSI</span>
+          <span id="rssi">-- dBm (--%)</span>
         </div>
         <div class="info-card">
-          <span>Light</span>
-          <span>Normal</span>
+          <span>Memory Usage</span>
+          <span id="memory">--%</span>
         </div>
         <div class="info-card">
-          <span>Time</span>
-          <span>Rtc</span>
-        </div>
-        <div class="info-card">
-          <span>Rssi</span>
-          <span>59%</span>
-        </div>
-        <div class="info-card">
-          <span>Control Mode</span>
-          <span>Semi Auto</span>
-        </div>
-        <div class="info-card">
-          <span>On Switches</span>
-          <span>03</span>
-        </div>
-        <div class="info-card">
-          <span>Power Usage</span>
-          <span>Unavailable</span>
+          <span>CPU Usage</span>
+          <span id="cpu">--%</span>
         </div>
       </div>
     </div>
 
     <script>
+      let socket;
+
+      function initWebSocket() {
+        socket = new WebSocket("ws://192.168.8.215:81");
+
+        // Handle WebSocket connection open
+        socket.addEventListener("open", (event) => {
+          console.log("WebSocket connection established");
+          // Request metrics every second
+          setInterval(() => {
+            socket.send("getMetrics");
+          }, 1000); // Request metrics every second
+        });
+
+        // Handle WebSocket messages
+        socket.addEventListener("message", (event) => {
+          const data = JSON.parse(event.data); // Parse the received data
+          console.log("Received metrics:", data);
+
+          // Update metrics
+          if (data.rssi !== undefined) {
+            document.getElementById(
+              "rssi"
+            ).textContent = `${data.rssi} dBm (${data.rssiPercent}%)`;
+          }
+          if (data.memory !== undefined) {
+            document.getElementById(
+              "memory"
+            ).textContent = `${data.memory.toFixed(2)}%`;
+          }
+          if (data.cpu !== undefined) {
+            document.getElementById("cpu").textContent = `${data.cpu.toFixed(
+              2
+            )}%`;
+          }
+        });
+      }
+
+      // Function to toggle the sidebar
       function toggleSidebar() {
         const sidebar = document.getElementById("sidebar");
         const hamburger = document.querySelector(".hamburger");

@@ -6,7 +6,7 @@
     <title>Control</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
+  <body onload="initWebSocket()">
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
       <a href="index.html">Dashboard</a>
@@ -43,57 +43,56 @@
     <script>
       // Initialize state
       let masterSwitchState = false;
-      const relayNames = [
-        "Kitchen",
-        "Night Guid",
-        "Bathroom",
-        "Gate Stairs",
-        "Kitchen Out",
-        "Living Room 1",
-        "Living Room 2",
-        "Master Bedroom",
-        "Guest Bedroom",
-        "Front Bedroom",
-        "Studio",
-        "Porch",
-        "Verenda 1",
-        "Verenda 2",
-        "Verenda 3",
-        "Back Yard",
-        "Garden Wall",
-        "Main Gate",
-      ];
+      let switchStates = Array(24).fill(false); // 24 switches
+      let relayNames = Array(24).fill("Relay "); // Placeholder for relay names
 
-      let switchStates = Array(relayNames.length).fill(false); // Match number of relays
+      // WebSocket connection
+      let socket;
+
+      function initWebSocket() {
+        socket = new WebSocket("ws://192.168.8.215:81");
+
+        // Handle WebSocket connection open
+        socket.addEventListener("open", (event) => {
+          console.log("WebSocket connection established");
+          // Request relay names and LED states on page load
+          socket.send("getNames");
+          socket.send("getLEDs");
+        });
+
+        // Handle WebSocket messages
+        socket.addEventListener("message", (event) => {
+          const data = JSON.parse(event.data); // Parse the received data
+          console.log("Received data:", data);
+
+          if (data.names) {
+            // Update relay names
+            relayNames = data.names;
+            updateSwitches(); // Update the UI
+          }
+
+          if (data.leds) {
+            // Update LED states
+            switchStates = data.leds;
+            updateSwitches(); // Update the UI
+
+            // Update master switch state based on LED states
+            masterSwitchState = switchStates.every((state) => state === true);
+            const masterButton = document.getElementById("masterSwitch");
+            masterButton.classList.toggle("on", masterSwitchState);
+          }
+        });
+      }
 
       // Function to toggle the master switch
       function toggleMasterSwitch() {
         masterSwitchState = !masterSwitchState;
-
-        // Toggle each switch one by one with a delay
-        switchStates.forEach((_, index) => {
-          setTimeout(() => {
-            switchStates[index] = masterSwitchState;
-            updateSwitches();
-            console.log(
-              `${relayNames[index]} switched to ${
-                masterSwitchState ? "ON" : "OFF"
-              }`
-            );
-          }, index * 50); // 200ms delay per switch
-        });
+        socket.send(`master:${masterSwitchState ? "on" : "off"}`); // Send master switch state to ESP32
       }
 
       // Function to toggle individual switches
       function toggleSwitch(index) {
-        switchStates[index] = !switchStates[index];
-        masterSwitchState = switchStates.every((state) => state);
-        updateSwitches();
-        console.log(
-          `${relayNames[index]} switched to ${
-            switchStates[index] ? "ON" : "OFF"
-          }`
-        );
+        socket.send(`toggle:${index + 1}`); // Send toggle command to ESP32 (LEDs are 1-24)
       }
 
       // Function to update the UI
@@ -103,29 +102,27 @@
           masterButton.classList.toggle("on", masterSwitchState);
         }
 
-        const switches = document.querySelectorAll(
-          ".switches-grid .toggle-button"
-        );
-        switches.forEach((button, index) => {
-          button.classList.toggle("on", switchStates[index]);
-        });
-      }
-
-      // Function to generate relay switches
-      function generateRelays() {
+        // Update existing toggle buttons or create new ones
         const switchesGrid = document.getElementById("switchesGrid");
-        switchesGrid.innerHTML = relayNames
-          .map(
-            (name, index) => `
-          <div class="toggle-container">
-            <span>${name}</span>
-            <button class="toggle-button" onclick="toggleSwitch(${index})">
-              <div class="toggle-circle"></div>
-            </button>
-          </div>
-        `
-          )
-          .join("");
+        for (let i = 0; i < 24; i++) {
+          let toggleContainer = switchesGrid.children[i];
+          if (!toggleContainer) {
+            // Create a new toggle container if it doesn't exist
+            toggleContainer = document.createElement("div");
+            toggleContainer.className = "toggle-container";
+            toggleContainer.innerHTML = `
+              <span>${relayNames[i]}</span>
+              <button class="toggle-button" onclick="toggleSwitch(${i})">
+                <div class="toggle-circle"></div>
+              </button>
+            `;
+            switchesGrid.appendChild(toggleContainer);
+          }
+
+          // Update the toggle button state
+          const toggleButton = toggleContainer.querySelector(".toggle-button");
+          toggleButton.classList.toggle("on", switchStates[i]);
+        }
       }
 
       // Function to toggle the sidebar
@@ -135,9 +132,6 @@
         sidebar.classList.toggle("active");
         hamburger.classList.toggle("active");
       }
-
-      // Generate relay switches on page load
-      generateRelays();
     </script>
   </body>
 </html>

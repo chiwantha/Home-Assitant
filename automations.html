@@ -26,55 +26,21 @@
         </div>
       </div>
 
-      <!-- Automation Cards -->
-      <div class="automations-grid">
-        <div class="automation-card">
-          <div class="automation-header">
-            <span>Turn on Lights at Sunset</span>
-            <button class="toggle-button" onclick="toggleAutomation(this)">
-              <div class="toggle-circle"></div>
-            </button>
+      <!-- Scene Creation Form -->
+      <div class="scene-creation">
+        <h2>Create a Scene</h2>
+        <form id="sceneForm">
+          <input type="text" id="sceneName" placeholder="Scene Name" required />
+          <div class="relays-selection" id="relaysSelection">
+            <!-- Relay checkboxes will be dynamically added here -->
           </div>
-          <div class="automation-description">
-            Automatically turns on the living room lights at sunset.
-          </div>
-        </div>
+          <button type="submit">Create Scene</button>
+        </form>
+      </div>
 
-        <div class="automation-card">
-          <div class="automation-header">
-            <span>Turn off Lights at Sunrise</span>
-            <button class="toggle-button" onclick="toggleAutomation(this)">
-              <div class="toggle-circle"></div>
-            </button>
-          </div>
-          <div class="automation-description">
-            Automatically turns off the living room lights at sunrise.
-          </div>
-        </div>
-
-        <div class="automation-card">
-          <div class="automation-header">
-            <span>Notify When Door Opens</span>
-            <button class="toggle-button" onclick="toggleAutomation(this)">
-              <div class="toggle-circle"></div>
-            </button>
-          </div>
-          <div class="automation-description">
-            Sends a notification when the front door is opened.
-          </div>
-        </div>
-
-        <div class="automation-card">
-          <div class="automation-header">
-            <span>Turn on Heater at 7 AM</span>
-            <button class="toggle-button" onclick="toggleAutomation(this)">
-              <div class="toggle-circle"></div>
-            </button>
-          </div>
-          <div class="automation-description">
-            Turns on the heater every morning at 7 AM.
-          </div>
-        </div>
+      <!-- Scene Cards -->
+      <div class="automations-grid" id="scenesGrid">
+        <!-- Scenes will be dynamically added here -->
       </div>
     </div>
 
@@ -87,9 +53,121 @@
         hamburger.classList.toggle("active");
       }
 
-      // Function to toggle automation state
-      function toggleAutomation(button) {
+      // Array to store scenes
+      let scenes = [];
+
+      // Array to store available relay names
+      let relayNames = [];
+
+      // WebSocket connection
+      const socket = new WebSocket("ws://192.168.8.215:81");
+
+      // Handle WebSocket connection open
+      socket.addEventListener("open", (event) => {
+        console.log("WebSocket connection established");
+
+        // Request available relay names from ESP32
+        socket.send(JSON.stringify({ type: "getRelays" }));
+      });
+
+      // Handle WebSocket messages
+      socket.addEventListener("message", (event) => {
+        const data = JSON.parse(event.data); // Parse the received data
+        console.log("Received data:", data);
+
+        if (data.type === "relays") {
+          // Update available relay names
+          relayNames = data.relays;
+          updateRelaysSelection(); // Update the checkboxes in the form
+        } else if (data.type === "sceneState") {
+          // Update scene toggle state
+          const sceneIndex = scenes.findIndex(
+            (scene) => scene.name === data.scene
+          );
+          if (sceneIndex !== -1) {
+            const button =
+              document.querySelectorAll(".toggle-button")[sceneIndex];
+            button.classList.toggle("on", data.state === "on");
+          }
+        }
+      });
+
+      // Function to update the relays selection checkboxes
+      function updateRelaysSelection() {
+        const relaysSelection = document.getElementById("relaysSelection");
+        relaysSelection.innerHTML = relayNames
+          .map(
+            (relay) => `
+          <label>
+            <input type="checkbox" name="relay" value="${relay}" />
+            ${relay}
+          </label>
+        `
+          )
+          .join("");
+      }
+
+      // Handle scene form submission
+      document
+        .getElementById("sceneForm")
+        .addEventListener("submit", (event) => {
+          event.preventDefault();
+
+          // Get scene name and selected relays
+          const sceneName = document.getElementById("sceneName").value;
+          const selectedRelays = Array.from(
+            document.querySelectorAll('input[name="relay"]:checked')
+          ).map((checkbox) => checkbox.value);
+
+          // Add the new scene to the scenes array
+          scenes.push({ name: sceneName, relays: selectedRelays });
+
+          // Clear the form
+          document.getElementById("sceneForm").reset();
+
+          // Update the UI
+          updateScenes();
+        });
+
+      // Function to update the scenes grid
+      function updateScenes() {
+        const scenesGrid = document.getElementById("scenesGrid");
+        scenesGrid.innerHTML = scenes
+          .map(
+            (scene, index) => `
+          <div class="automation-card">
+            <div class="automation-header">
+              <span>${scene.name}</span>
+              <button class="toggle-button" onclick="toggleScene(${index})">
+                <div class="toggle-circle"></div>
+              </button>
+            </div>
+            <div class="automation-description">
+              Turns on: ${scene.relays.join(", ")}
+            </div>
+          </div>
+        `
+          )
+          .join("");
+      }
+
+      // Function to toggle a scene
+      function toggleScene(index) {
+        const scene = scenes[index];
+        const button = document.querySelectorAll(".toggle-button")[index];
+
+        // Toggle the scene on/off
+        const newState = button.classList.contains("on") ? "off" : "on";
         button.classList.toggle("on");
+
+        // Send WebSocket message to ESP32 to toggle the scene
+        const message = JSON.stringify({
+          type: "scene",
+          scene: scene.name,
+          state: newState,
+          relays: scene.relays,
+        });
+        socket.send(message);
       }
     </script>
   </body>
